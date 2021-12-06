@@ -15,19 +15,11 @@ df2["PLAYER"] = df2["PLAYER"].replace('\n', ' ', regex=True)
 data = pd.merge(df2, df1, how="inner", left_on="PLAYER", right_on="PLAYER")
 
 # only include players from the 5 schools with the most NBA players
-<<<<<<< HEAD
 duke = data[data["COLLEGE"] == "Duke"]
 kentucky = data[data["COLLEGE"] == "Kentucky"]
 texas = data[data["COLLEGE"] == "Texas"]
 nova = data[data["COLLEGE"] == "Villanova"]
 ucla = data[data["COLLEGE"] == "UCLA"]
-=======
-duke = df3[df3["COLLEGE"] == "Duke"]
-kentucky = df3[df3["COLLEGE"] == "Kentucky"]
-texas = df3[df3["COLLEGE"] == "Texas"]
-nova = df3[df3["COLLEGE"] == "Villanova"]
-ucla = df3[df3["COLLEGE"] == "UCLA"]
->>>>>>> 358535ad3e137f08cc2ceddf965bda85b05848e8
 df = pd.merge(duke, kentucky, how='outer')
 df = pd.merge(df, texas, how='outer')
 df = pd.merge(df, nova, how='outer')
@@ -64,12 +56,6 @@ topSchools = data.groupby("COLLEGE").sum()
 topSchools = topSchools['Players'].nlargest(12)
 
 # graph colleges with the most players
-<<<<<<< HEAD
 ax = topSchools.plot.bar(y='Players', rot=0, color='mediumslateblue')
 plt.title("College's Number of NBA Players")
 plt.show()
-=======
-ax = df15.plot.bar(y='Players', rot=0, color='mediumslateblue')
-plt.title("College's Number of NBA PLayers")
-plt.show()
->>>>>>> 358535ad3e137f08cc2ceddf965bda85b05848e8
