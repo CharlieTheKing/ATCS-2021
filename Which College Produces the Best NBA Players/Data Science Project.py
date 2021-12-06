@@ -13,10 +13,6 @@ df2["PLAYER"] = df2["PLAYER"].replace('\n', ' ', regex=True)
 #merge by mutual player name
 df3 = pd.merge(df2, df1, how="inner", left_on="PLAYER", right_on="PLAYER")
 
-# print(df2["PLAYER"])
-# print(df1["PLAYER"])
-# print(df3.to_string())
-
 # only include players from the 5 schools with the most NBA players
 duke = df3[df3["COLLEGE"] == "Duke"]
 kentucky = df3[df3["COLLEGE"] == "Kentucky"]
