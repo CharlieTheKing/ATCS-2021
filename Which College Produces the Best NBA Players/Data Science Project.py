@@ -32,6 +32,7 @@ data['Players'] = player
 
 # group players by college
 colleges = df.groupby("COLLEGE").sum()
+# print(colleges)
 
 # pie chart of games played
 colleges.plot.pie(y="GP")
