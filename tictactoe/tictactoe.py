@@ -64,20 +64,12 @@ class TicTacToe:
 
     def take_random_turn(self, player):
         # TODO: randomly place a piece on an available space on the board
-        countEmpty = 0
-        for i in range(3):
-            for j in range(3):
-                if self.board[i][j] == "-":
-                    countEmpty = countEmpty + 1
-        rando = random.randint(0, countEmpty - 1)
-        randoTrack = 0
-        for i in range(3):
-            for j in range(3):
-                if self.board[i][j] == "-":
-                    if (rando == randoTrack):
-                        self.board[i][j] = player
-                        return
-                    randoTrack = randoTrack + 1
+        row = random.randint(0,2)
+        col = random.randint(0,2)
+        while self.is_valid_move(row,col) is False:
+            row = random.randint(0, 2)
+            col = random.randint(0, 2)
+        self.board[row][col] = player
         return
 
 
