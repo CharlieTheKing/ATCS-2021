@@ -103,7 +103,6 @@ class TicTacToe:
         for i in range(3):
             for j in range(3):
                 if self.board[i][j] == "-":
-                    print("yee")
                     return False
         return True
 
