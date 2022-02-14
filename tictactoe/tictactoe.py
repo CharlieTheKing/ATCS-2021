@@ -59,7 +59,7 @@ class TicTacToe:
         if player == "X":
             self.take_manual_turn(player)
         if player == "O":
-            self.take_random_turn(player)
+            self.take_minimax_turn(player)
         return
 
     def take_random_turn(self, player):
@@ -72,6 +72,48 @@ class TicTacToe:
         self.board[row][col] = player
         return
 
+    def minimax(self, player):
+        # base case
+        if self.check_win("X"):
+            return -10, None, None
+        elif self.check_win("O"):
+            return 10, None, None
+        elif self.check_tie():
+            return 0, None, None
+
+            # recursive case
+        opt_row = -1
+        opt_col = -1
+        if player == "O":
+            best = -100
+            for row in range(3):
+                for col in range(3):
+                    if self.is_valid_move(row, col):
+                        self.place_player("O", row, col)
+                        score = self.take_minimax_turn("X")[0]
+                        self.place_player("-", row, col)
+                        if best < score:
+                            best = score
+                            opt_row = row
+                            opt_col = col
+            return best, opt_row, opt_col
+        if player == "X":
+            worst = 100
+            for row in range(3):
+                for col in range(3):
+                    if self.is_valid_move(row, col):
+                        self.place_player("X", row, col)
+                        score = self.take_minimax_turn("O")[0]
+                        self.place_player("-", row, col)
+                        if worst > score:
+                            worst = score
+                            opt_row = row
+                            opt_col = col
+            return worst, opt_row, opt_col
+
+    def take_minimax_turn(self, player):
+        score, row, col = self.minimax(player)
+        self.place_player(player, row, col)
 
     def check_col_win(self, player):
         # TODO: Check col win
