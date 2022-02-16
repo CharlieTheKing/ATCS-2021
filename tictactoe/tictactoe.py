@@ -66,7 +66,7 @@ class TicTacToe:
         # TODO: randomly place a piece on an available space on the board
         row = random.randint(0,2)
         col = random.randint(0,2)
-        while self.is_valid_move(row,col) is False:
+        while self.is_valid_move(row, col) is False:
             row = random.randint(0, 2)
             col = random.randint(0, 2)
         self.board[row][col] = player
@@ -90,7 +90,7 @@ class TicTacToe:
                 for col in range(3):
                     if self.is_valid_move(row, col):
                         self.place_player("O", row, col)
-                        score = self.take_minimax_turn("X")[0]
+                        score = self.minimax("X")[0]
                         self.place_player("-", row, col)
                         if best < score:
                             best = score
@@ -103,7 +103,7 @@ class TicTacToe:
                 for col in range(3):
                     if self.is_valid_move(row, col):
                         self.place_player("X", row, col)
-                        score = self.take_minimax_turn("O")[0]
+                        score = self.minimax("O")[0]
                         self.place_player("-", row, col)
                         if worst > score:
                             worst = score
