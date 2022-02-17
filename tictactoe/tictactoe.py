@@ -59,7 +59,7 @@ class TicTacToe:
         if player == "X":
             self.take_manual_turn(player)
         if player == "O":
-            self.take_minimax_turn(player)
+            self.take_minimax_turn(player, 6)
         return
 
     def take_random_turn(self, player):
@@ -72,7 +72,7 @@ class TicTacToe:
         self.board[row][col] = player
         return
 
-    def minimax(self, player):
+    def minimax(self, player, depth):
         # base case
         if self.check_win("X"):
             return -10, None, None
@@ -90,12 +90,15 @@ class TicTacToe:
                 for col in range(3):
                     if self.is_valid_move(row, col):
                         self.place_player("O", row, col)
-                        score = self.minimax("X")[0]
+                        new_depth = depth - 1
+                        score = self.minimax("X", new_depth)[0]
                         self.place_player("-", row, col)
                         if best < score:
                             best = score
                             opt_row = row
                             opt_col = col
+                        if depth == 0:
+                            return best, opt_row, opt_col
             return best, opt_row, opt_col
         if player == "X":
             worst = 100
@@ -103,16 +106,19 @@ class TicTacToe:
                 for col in range(3):
                     if self.is_valid_move(row, col):
                         self.place_player("X", row, col)
-                        score = self.minimax("O")[0]
+                        new_depth = depth - 1
+                        score = self.minimax("O", new_depth)[0]
                         self.place_player("-", row, col)
                         if worst > score:
                             worst = score
                             opt_row = row
                             opt_col = col
+                        if depth == 0:
+                            return worst, opt_row, opt_col
             return worst, opt_row, opt_col
 
-    def take_minimax_turn(self, player):
-        score, row, col = self.minimax(player)
+    def take_minimax_turn(self, player, depth):
+        score, row, col = self.minimax(player, depth)
         self.place_player(player, row, col)
 
     def check_col_win(self, player):
