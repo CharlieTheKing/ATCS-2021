@@ -59,7 +59,7 @@ class TicTacToe:
         if player == "X":
             self.take_manual_turn(player)
         if player == "O":
-            self.take_minimax_turn(player, 6)
+            self.take_minimax_turn(player, 2)
         return
 
     def take_random_turn(self, player):
@@ -80,6 +80,8 @@ class TicTacToe:
             return 10, None, None
         elif self.check_tie():
             return 0, None, None
+        if depth == 0:
+            return 0, None, None
 
             # recursive case
         opt_row = -1
@@ -97,8 +99,6 @@ class TicTacToe:
                             best = score
                             opt_row = row
                             opt_col = col
-                        if depth == 0:
-                            return best, opt_row, opt_col
             return best, opt_row, opt_col
         if player == "X":
             worst = 100
@@ -113,8 +113,6 @@ class TicTacToe:
                             worst = score
                             opt_row = row
                             opt_col = col
-                        if depth == 0:
-                            return worst, opt_row, opt_col
             return worst, opt_row, opt_col
 
     def take_minimax_turn(self, player, depth):
