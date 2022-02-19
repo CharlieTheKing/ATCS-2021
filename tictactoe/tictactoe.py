@@ -1,4 +1,5 @@
 import random
+import time
 
 # Charlie King
 
@@ -44,13 +45,18 @@ class TicTacToe:
     def take_manual_turn(self, player):
         # TODO: Ask the user for a row, col until a valid response
         #  is given them place the player's icon in the right spot
-        row = int(input("Enter a row: "))
-        col = int(input("Enter a col: "))
-        while self.is_valid_move(row, col) is False:
-            print("Please enter a valid move.")
-            row = int(input("Enter a row: "))
-            col = int(input("Enter a col: "))
-        self.place_player(player, row, col)
+        while True:
+            try:
+                row = int(input("Enter a row: "))
+                col = int(input("Enter a col: "))
+            except ValueError:
+                print("Please enter a valid move.")
+            else:
+                if self.is_valid_move(int(row), int(col)):
+                    break
+                else:
+                    print("Please enter a valid move.")
+        self.place_player(player, int (row), int (col))
         return
 
     def take_turn(self, player):
@@ -59,7 +65,7 @@ class TicTacToe:
         if player == "X":
             self.take_manual_turn(player)
         if player == "O":
-            self.take_minimax_turn(player, 2)
+            self.take_minimax_turn(player, 100)
         return
 
     def take_random_turn(self, player):
@@ -115,9 +121,62 @@ class TicTacToe:
                             opt_col = col
             return worst, opt_row, opt_col
 
+    def minimax_alpha_beta(self, player, depth, alpha, beta):
+        # base case
+        if self.check_win("X"):
+            return -10, None, None
+        elif self.check_win("O"):
+            return 10, None, None
+        elif self.check_tie():
+            return 0, None, None
+        if depth == 0:
+            return 0, None, None
+
+            # recursive case
+        opt_row = -1
+        opt_col = -1
+        if player == "O":
+            best = -100
+            for row in range(3):
+                for col in range(3):
+                    if self.is_valid_move(row, col):
+                        self.place_player("O", row, col)
+                        new_depth = depth - 1
+                        score = self.minimax_alpha_beta("X", new_depth, alpha, beta)[0]
+                        self.place_player("-", row, col)
+                        if best < score:
+                            best = score
+                            opt_row = row
+                            opt_col = col
+                            alpha = score
+                        if alpha >= beta:
+                            break
+            return best, opt_row, opt_col
+        if player == "X":
+            worst = 100
+            for row in range(3):
+                for col in range(3):
+                    if self.is_valid_move(row, col):
+                        self.place_player("X", row, col)
+                        new_depth = depth - 1
+                        score = self.minimax_alpha_beta("O", new_depth, alpha, beta)[0]
+                        self.place_player("-", row, col)
+                        if worst > score:
+                            worst = score
+                            opt_row = row
+                            opt_col = col
+                            beta = score
+                        if alpha >= beta:
+                            break
+            return worst, opt_row, opt_col
+
     def take_minimax_turn(self, player, depth):
-        score, row, col = self.minimax(player, depth)
+        start = time.time()
+        # score, row, col = self.minimax(player, depth)
+        score, row, col = self.minimax_alpha_beta(player, depth, -1000, 1000)
+        end = time.time()
         self.place_player(player, row, col)
+        print("This turn took:", end - start, "seconds")
 
     def check_col_win(self, player):
         # TODO: Check col win
