@@ -34,35 +34,6 @@ class FlyingSprite(arcade.Sprite):
         if self.right < 0:
             self.remove_from_sprite_lists()
 
-# Classes
-class Welcome(arcade.Window):
-    """Main welcome window
-    """
-    def __init__(self):
-        """Initialize the window
-        """
-
-        # Call the parent class constructor
-        super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
-
-        # Set the background window
-        arcade.set_background_color(arcade.color.WHITE)
-
-    def on_draw(self):
-        """Called whenever you need to draw your window
-        """
-
-        # Clear the screen and start drawing
-        arcade.start_render()
-
-        # Draw a blue circle
-        arcade.draw_text("Press Enter to Start", 120.0, 300.0,
-                         arcade.color.GREEN, 40, 80, 'left')
-
-    def on_key_release(self, symbol, modifiers):
-        if symbol == arcade.key.ENTER:
-            game = AirWars()
-
 
 # Classes
 class AirWars(arcade.Window):
@@ -79,6 +50,8 @@ class AirWars(arcade.Window):
         self.all_sprites = None
         self.paused = None
         self.player = None
+        self.game_started = False
+        self.game_over = False
         self.level = 1
         self.reset()
 
@@ -92,6 +65,11 @@ class AirWars(arcade.Window):
         self.setup()
         self.on_draw()
 
+    def game_over(self):
+        self.small_enemies_list = None
+        self.clouds_list = None
+        self.all_sprites = None
+
 
     def setup(self):
         """Get the game ready to play"""
@@ -103,13 +81,14 @@ class AirWars(arcade.Window):
         self.player = arcade.Sprite("plane.png", SCALING)
         self.player.center_y = self.height / 2
         self.player.left = 10
-        self.all_sprites.append(self.player)
+        if self.game_started is True:
+            self.all_sprites.append(self.player)
 
         # Spawn new enemy every 0.5 seconds
-        arcade.schedule(self.add_small_enemy, 0.5 * self.level)
+        arcade.schedule(self.add_small_enemy, 1.5 / self.level)
 
         # Spawn new cloud every second
-        arcade.schedule(self.add_cloud, 1.5)
+        arcade.schedule(self.add_cloud, 3)
 
         self.on_update(float)
 
@@ -128,7 +107,9 @@ class AirWars(arcade.Window):
         enemy.top = random.randint(10, self.height - 15)
 
         # Set its speed to a random speed heading left
-        enemy.velocity = (random.randint(-8, -5), 0)
+        x_change_max = int(self.level - 3 - self.level * 2)
+        x_change_min = int(self.level - 2 - self.level * 1.5)
+        enemy.velocity = (random.randint(x_change_max, x_change_min), 0)
 
         # Add it to the enemies list
         self.small_enemies_list.append(enemy)
@@ -149,7 +130,7 @@ class AirWars(arcade.Window):
         cloud.top = random.randint(10, self.height - 10)
 
         # Set its speed to a random speed heading left
-        cloud.velocity = (random.randint(-3, -1), 0)
+        cloud.velocity = (random.randint(-2, -1), 0)
 
         # Add it to the enemies list
         self.clouds_list.append(cloud)
@@ -174,10 +155,10 @@ class AirWars(arcade.Window):
             self.paused = not self.paused
 
         if symbol == arcade.key.I or symbol == arcade.key.UP:
-            self.player.change_y = 8
+            self.player.change_y = 5
 
         if symbol == arcade.key.K or symbol == arcade.key.DOWN:
-            self.player.change_y = -8
+            self.player.change_y = -5
 
         if symbol == arcade.key.J or symbol == arcade.key.LEFT:
             self.player.change_x = -5
@@ -192,6 +173,12 @@ class AirWars(arcade.Window):
             symbol {int} -- Which key was pressed
             modifiers {int} -- Which modifiers were pressed
         """
+
+        if symbol == arcade.key.ENTER and self.game_started is False:
+            self.game_started = True
+            self.reset()
+
+
         if (
                 symbol == arcade.key.I
                 or symbol == arcade.key.K
@@ -228,8 +215,8 @@ class AirWars(arcade.Window):
         # Did you hit anything? If so, end the game
         if self.player.collides_with_list(self.small_enemies_list):
             # checks if bug spawned on top of the plane
-            if self.player.right < SCREEN_WIDTH - 100:
-                arcade.close_window()
+            if self.player.right < SCREEN_WIDTH - 140:
+                self.game_over = True
 
         # Update everything
         self.all_sprites.update()
@@ -248,32 +235,44 @@ class AirWars(arcade.Window):
         """Draw all game objects
         """
         arcade.start_render()
-        # Draw finish line
-        self.all_sprites.draw()
-        # draw checkerboard finish line
-        for i in range(30):
-            if i % 2 == 1:
-                arcade.draw_rectangle_filled(
-                    SCREEN_WIDTH - 60, i * 40, 40, SCREEN_HEIGHT, arcade.color.WHITE
-                )
-            else:
-                arcade.draw_rectangle_filled(
-                    SCREEN_WIDTH - 60, i * 40, 40, SCREEN_HEIGHT, arcade.color.BLACK
-                )
-        for i in range(30):
-            if i % 2 == 1:
-                arcade.draw_rectangle_filled(
-                    SCREEN_WIDTH - 20, i * 40, 40, SCREEN_HEIGHT, arcade.color.BLACK
-                )
-            else:
-                arcade.draw_rectangle_filled(
-                    SCREEN_WIDTH - 20, i * 40, 40, SCREEN_HEIGHT, arcade.color.WHITE
-                )
-        # draw level count
-        arcade.draw_text("Level " + str(self.level), 30, SCREEN_HEIGHT - 60, arcade.color.BLACK, 30)
+        # Draw a blue circle
+        if self.game_started is False:
+            arcade.draw_text("Press Enter to Start", 260, 385.0,
+                arcade.color.BLACK, 40, 80, 'left')
+
+        elif self.game_over is True:
+            arcade.draw_text("Game Over", 360, 415.0,
+                             arcade.color.BLACK, 40, 80, 'left')
+            arcade.draw_text("You reached level " + str(self.level), 260, 365.0,
+                             arcade.color.BLACK, 40, 80, 'left')
+
+        else:
+            # Draw finish line
+            self.all_sprites.draw()
+            # draw checkerboard finish line
+            for i in range(30):
+                if i % 2 == 1:
+                    arcade.draw_rectangle_filled(
+                        SCREEN_WIDTH - 60, i * 40, 40, SCREEN_HEIGHT, arcade.color.WHITE
+                    )
+                else:
+                    arcade.draw_rectangle_filled(
+                        SCREEN_WIDTH - 60, i * 40, 40, SCREEN_HEIGHT, arcade.color.BLACK
+                    )
+            for i in range(30):
+                if i % 2 == 1:
+                    arcade.draw_rectangle_filled(
+                        SCREEN_WIDTH - 20, i * 40, 40, SCREEN_HEIGHT, arcade.color.BLACK
+                    )
+                else:
+                    arcade.draw_rectangle_filled(
+                        SCREEN_WIDTH - 20, i * 40, 40, SCREEN_HEIGHT, arcade.color.WHITE
+                    )
+            # draw level count
+            arcade.draw_text("Level " + str(self.level), 30, SCREEN_HEIGHT - 60, arcade.color.BLACK, 30)
 
 
 # Main code entry point
 if __name__ == "__main__":
-    app = Welcome()
+    app = AirWars()
     arcade.run()
