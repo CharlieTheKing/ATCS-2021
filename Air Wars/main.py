@@ -36,8 +36,8 @@ class Bug(arcade.Sprite):
             self.remove_from_sprite_lists()
 
         # Set its speed to a random speed heading left
-        x_change_max = int(app.level - 3 - app.level * 2)
-        x_change_min = int(app.level - 2 - app.level * 1.5)
+        x_change_max = int(app.level - 3 - app.level * 3)
+        x_change_min = int(app.level - 2 - app.level * 2)
         if self.center_y > app.player.center_y:
             if self.center_y - app.player.center_y > 200:
                 self.velocity = (random.randint(x_change_max, x_change_min), -1)
@@ -49,10 +49,10 @@ class Bug(arcade.Sprite):
             else:
                 self.velocity = (random.randint(x_change_max, x_change_min), 0.5)
 
-        x1 = self.center_x - 80
-        x2 = self.center_x + 80
-        y1 = self.center_y - 80
-        y2 = self.center_y + 80
+        x1 = self.center_x - 40
+        x2 = self.center_x + 40
+        y1 = self.center_y - 60
+        y2 = self.center_y + 60
         self.set_hit_box([(x1, y1), (x2, y1), (x1, y2), (x2, y2)])
 
 class Cloud(arcade.Sprite):
@@ -133,6 +133,7 @@ class AirWars(arcade.Window):
         arcade.schedule(self.add_small_enemy, 1.5 / self.level)
 
         # Spawn new cloud every 3 seconds
+        arcade.unschedule(self.add_cloud)
         arcade.schedule(self.add_cloud, 3)
 
         self.on_update(float)
