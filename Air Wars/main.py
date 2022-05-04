@@ -35,25 +35,38 @@ class Bug(arcade.Sprite):
         if self.right < 0:
             self.remove_from_sprite_lists()
 
-        # Set its speed to a random speed heading left
-        x_change_max = int(app.level - 3 - app.level * 3)
-        x_change_min = int(app.level - 2 - app.level * 2)
-        if self.center_y > app.player.center_y:
-            if self.center_y - app.player.center_y > 200:
-                self.velocity = (random.randint(x_change_max, x_change_min), -1)
-            else:
-                self.velocity = (random.randint(x_change_max, x_change_min), -0.5)
-        else:
-            if self.center_y - app.player.center_y < 200:
-                self.velocity = (random.randint(x_change_max, x_change_min), 1)
-            else:
-                self.velocity = (random.randint(x_change_max, x_change_min), 0.5)
+        self.AI()
 
         x1 = self.center_x - 40
         x2 = self.center_x + 40
         y1 = self.center_y - 60
         y2 = self.center_y + 60
         self.set_hit_box([(x1, y1), (x2, y1), (x1, y2), (x2, y2)])
+
+    def AI(self):
+        # Set its speed to a random speed heading left
+        x_change_max = int(app.level - 3 - app.level * 3)
+        x_change_min = int(app.level - 2 - app.level * 2)
+        # adjust course depending on location of player
+        if self.center_y - app.player.center_y > 1 or self.center_y - app.player.center_y < -1:
+            self.velocity = (random.randint(x_change_max, x_change_min), (app.player.center_y - self.center_y) / 50)
+        else:
+            self.velocity = (random.randint(x_change_max, x_change_min), 0)
+
+class Bullet(arcade.Sprite):
+    def update(self):
+
+        """Update the position of the sprite
+        When it moves off screen to the left, remove it
+        """
+        # Move the sprite
+        super().update()
+
+        # Remove if off the screen
+        if self.right < 0:
+            self.remove_from_sprite_lists()
+
+        self.velocity = (3, 0)
 
 class Cloud(arcade.Sprite):
     """Base class for all flying sprites
@@ -104,6 +117,7 @@ class AirWars(arcade.Window):
         self.small_enemies_list = arcade.SpriteList()
         self.clouds_list = arcade.SpriteList()
         self.all_sprites = arcade.SpriteList()
+        self.bullet_list = arcade.SpriteList()
         self.paused = False
         self.player = None
         self.setup()
@@ -112,6 +126,7 @@ class AirWars(arcade.Window):
     def game_over(self):
         self.small_enemies_list = None
         self.clouds_list = None
+        self.bullet_list = None
         self.all_sprites = None
 
 
@@ -134,7 +149,7 @@ class AirWars(arcade.Window):
 
         # Spawn new cloud every 3 seconds
         arcade.unschedule(self.add_cloud)
-        arcade.schedule(self.add_cloud, 3)
+        arcade.schedule(self.add_cloud, 4)
 
         self.on_update(float)
 
@@ -155,6 +170,14 @@ class AirWars(arcade.Window):
         # Add it to the enemies list
         self.small_enemies_list.append(enemy)
         self.all_sprites.append(enemy)
+
+    def shoot_bullet(self):
+        bullet = Bullet("Bullet.png", 0.04)
+        bullet.center_x = app.player.center_x + 30
+        bullet.center_y = app.player.center_y
+        self.bullet_list.append(bullet)
+        self.all_sprites.append(bullet)
+
 
     def add_cloud(self, delta_time: float):
         """Adds a new cloud to the screen
@@ -188,24 +211,29 @@ class AirWars(arcade.Window):
             symbol {int} -- Which key was pressed
             modifiers {int} -- Which modifiers were pressed
         """
-        if symbol == arcade.key.Q:
-            # Quit immediately
-            arcade.close_window()
+        if self.game_started is True:
 
-        if symbol == arcade.key.P:
-            self.paused = not self.paused
+            if symbol == arcade.key.Q:
+                # Quit immediately
+                arcade.close_window()
 
-        if symbol == arcade.key.I or symbol == arcade.key.UP:
-            self.player.change_y = 5
+            if symbol == arcade.key.P:
+                self.paused = not self.paused
 
-        if symbol == arcade.key.K or symbol == arcade.key.DOWN:
-            self.player.change_y = -5
+            if symbol == arcade.key.W or symbol == arcade.key.UP:
+                self.player.change_y = 5
 
-        if symbol == arcade.key.J or symbol == arcade.key.LEFT:
-            self.player.change_x = -5
+            if symbol == arcade.key.S or symbol == arcade.key.DOWN:
+                self.player.change_y = -5
 
-        if symbol == arcade.key.L or symbol == arcade.key.RIGHT:
-            self.player.change_x = 5
+            if symbol == arcade.key.A or symbol == arcade.key.LEFT:
+                self.player.change_x = -5
+
+            if symbol == arcade.key.D or symbol == arcade.key.RIGHT:
+                self.player.change_x = 5
+
+            if symbol == arcade.key.SPACE:
+                self.shoot_bullet()
 
     def on_key_release(self, symbol: int, modifiers: int):
         """Undo movement vectors when movement keys are released
@@ -226,16 +254,16 @@ class AirWars(arcade.Window):
 
 
         if (
-                symbol == arcade.key.I
-                or symbol == arcade.key.K
+                symbol == arcade.key.W
+                or symbol == arcade.key.A
                 or symbol == arcade.key.UP
                 or symbol == arcade.key.DOWN
         ):
             self.player.change_y = 0
 
         if (
-                symbol == arcade.key.J
-                or symbol == arcade.key.L
+                symbol == arcade.key.A
+                or symbol == arcade.key.D
                 or symbol == arcade.key.LEFT
                 or symbol == arcade.key.RIGHT
         ):
@@ -265,6 +293,12 @@ class AirWars(arcade.Window):
                 self.game_over = True
                 return
 
+        for bullet in self.bullet_list:
+            for small_enemy in self.small_enemies_list:
+                if bullet.collides_with_sprite(small_enemy):
+                    self.small_enemies_list.remove(small_enemy)
+                    self.bullet_list.remove(bullet)
+
         # Update everything
         self.all_sprites.update()
 
@@ -284,7 +318,7 @@ class AirWars(arcade.Window):
         arcade.start_render()
         # Draw a blue circle
         if self.game_started is False:
-            arcade.draw_text("Press enter to start", 260, 385.0,
+            arcade.draw_text("Press return to start", 260, 385.0,
                 arcade.color.BLACK, 40, 80, 'left')
 
         elif self.game_over is True:
@@ -292,7 +326,7 @@ class AirWars(arcade.Window):
                              arcade.color.BLACK, 40, 80, 'left')
             arcade.draw_text("You reached level " + str(self.level), 260, 365.0,
                              arcade.color.BLACK, 40, 80, 'left')
-            arcade.draw_text("Press enter to play again", 200, 315.0,
+            arcade.draw_text("Press return to play again", 200, 312.0,
                              arcade.color.BLACK, 40, 80, 'left')
 
         else:
