@@ -37,16 +37,16 @@ class Bug(arcade.Sprite):
 
         self.AI()
 
-        x1 = self.center_x - 40
-        x2 = self.center_x + 40
-        y1 = self.center_y - 60
-        y2 = self.center_y + 60
+        x1 = self.center_x - 500
+        x2 = self.center_x + 500
+        y1 = self.center_y - 500
+        y2 = self.center_y + 80
         self.set_hit_box([(x1, y1), (x2, y1), (x1, y2), (x2, y2)])
 
     def AI(self):
         # Set its speed to a random speed heading left
-        x_change_max = int(app.level - 3 - app.level * 3)
-        x_change_min = int(app.level - 2 - app.level * 2)
+        x_change_max = int(app.level - 3 - app.level * 2)
+        x_change_min = int(app.level - 2 - app.level * 1.5)
         # adjust course depending on location of player
         if self.center_y - app.player.center_y > 1 or self.center_y - app.player.center_y < -1:
             self.velocity = (random.randint(x_change_max, x_change_min), (app.player.center_y - self.center_y) / 50)
@@ -66,7 +66,13 @@ class Bullet(arcade.Sprite):
         if self.right < 0:
             self.remove_from_sprite_lists()
 
-        self.velocity = (3, 0)
+        x1 = self.center_x - 30
+        x2 = self.center_x + 30
+        y1 = self.center_y - 30
+        y2 = self.center_y + 30
+        self.set_hit_box([(x1, y1), (x2, y1), (x1, y2), (x2, y2)])
+
+        self.velocity = (6, 0)
 
 class Cloud(arcade.Sprite):
     """Base class for all flying sprites
@@ -120,6 +126,7 @@ class AirWars(arcade.Window):
         self.bullet_list = arcade.SpriteList()
         self.paused = False
         self.player = None
+        self.bullets_left = 5
         self.setup()
         self.on_draw()
 
@@ -140,8 +147,15 @@ class AirWars(arcade.Window):
         self.player = arcade.Sprite("plane.png", SCALING)
         self.player.center_y = self.height / 2
         self.player.left = 10
+        x1 = self.player.center_x - 50
+        x2 = self.player.center_x - 20
+        y1 = self.player.center_y - 520
+        y2 = self.player.center_y - 70
+        self.player.set_hit_box([(x1, y1), (x2, y1), (x1, y2), (x2, y2)])
         if self.game_started is True:
             self.all_sprites.append(self.player)
+
+
 
         arcade.unschedule(self.add_small_enemy)
         # Spawn new enemy every 1.5 / self.level seconds
@@ -172,11 +186,13 @@ class AirWars(arcade.Window):
         self.all_sprites.append(enemy)
 
     def shoot_bullet(self):
-        bullet = Bullet("Bullet.png", 0.04)
-        bullet.center_x = app.player.center_x + 30
-        bullet.center_y = app.player.center_y
-        self.bullet_list.append(bullet)
-        self.all_sprites.append(bullet)
+        if self.bullets_left > 0:
+            bullet = Bullet("Bullet.png", 0.04)
+            bullet.center_x = app.player.center_x + 30
+            bullet.center_y = app.player.center_y
+            self.bullets_left = self.bullets_left - 1
+            self.bullet_list.append(bullet)
+            self.all_sprites.append(bullet)
 
 
     def add_cloud(self, delta_time: float):
@@ -293,11 +309,17 @@ class AirWars(arcade.Window):
                 self.game_over = True
                 return
 
+        collisions = []
+        self.bullet_list.update()
+        self.small_enemies_list.update()
+
         for bullet in self.bullet_list:
-            for small_enemy in self.small_enemies_list:
-                if bullet.collides_with_sprite(small_enemy):
-                    self.small_enemies_list.remove(small_enemy)
-                    self.bullet_list.remove(bullet)
+            collisions = arcade.check_for_collision_with_list(bullet, self.small_enemies_list)
+
+        for bug in collisions:
+            bug.remove_from_sprite_lists()
+            self.small_enemies_list.update()
+
 
         # Update everything
         self.all_sprites.update()
@@ -353,6 +375,9 @@ class AirWars(arcade.Window):
                     )
             # draw level count
             arcade.draw_text("Level " + str(self.level), 30, SCREEN_HEIGHT - 60, arcade.color.BLACK, 30)
+
+            # darw bullet count
+            arcade.draw_text("Bullets Left: " + str(self.bullets_left), SCREEN_WIDTH - 370, SCREEN_HEIGHT - 60, arcade.color.BLACK, 30)
 
 
 # Main code entry point
