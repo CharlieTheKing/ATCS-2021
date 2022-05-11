@@ -35,13 +35,13 @@ class Bug(arcade.Sprite):
         if self.right < 0:
             self.remove_from_sprite_lists()
 
-        self.AI()
-
-        x1 = self.center_x - 500
-        x2 = self.center_x + 500
-        y1 = self.center_y - 500
-        y2 = self.center_y + 80
+        x1 = self.center_x - 330
+        x2 = self.center_x - 300
+        y1 = self.center_y - 440
+        y2 = self.center_y - 380
         self.set_hit_box([(x1, y1), (x2, y1), (x1, y2), (x2, y2)])
+
+        self.AI()
 
     def AI(self):
         # Set its speed to a random speed heading left
@@ -49,7 +49,7 @@ class Bug(arcade.Sprite):
         x_change_min = int(app.level - 2 - app.level * 1.5)
         # adjust course depending on location of player
         if self.center_y - app.player.center_y > 1 or self.center_y - app.player.center_y < -1:
-            self.velocity = (random.randint(x_change_max, x_change_min), (app.player.center_y - self.center_y) / 50)
+            self.velocity = (random.randint(x_change_max, x_change_min), (app.player.center_y - self.center_y) / 70)
         else:
             self.velocity = (random.randint(x_change_max, x_change_min), 0)
 
@@ -66,10 +66,10 @@ class Bullet(arcade.Sprite):
         if self.right < 0:
             self.remove_from_sprite_lists()
 
-        x1 = self.center_x - 30
-        x2 = self.center_x + 30
-        y1 = self.center_y - 30
-        y2 = self.center_y + 30
+        x1 = self.center_x - 500
+        x2 = self.center_x + 100
+        y1 = self.center_y - 1100
+        y2 = self.center_y + 75
         self.set_hit_box([(x1, y1), (x2, y1), (x1, y2), (x2, y2)])
 
         self.velocity = (6, 0)
@@ -126,7 +126,7 @@ class AirWars(arcade.Window):
         self.bullet_list = arcade.SpriteList()
         self.paused = False
         self.player = None
-        self.bullets_left = 5
+        self.bullets_left = 50
         self.setup()
         self.on_draw()
 
@@ -147,15 +147,8 @@ class AirWars(arcade.Window):
         self.player = arcade.Sprite("plane.png", SCALING)
         self.player.center_y = self.height / 2
         self.player.left = 10
-        x1 = self.player.center_x - 50
-        x2 = self.player.center_x - 20
-        y1 = self.player.center_y - 520
-        y2 = self.player.center_y - 70
-        self.player.set_hit_box([(x1, y1), (x2, y1), (x1, y2), (x2, y2)])
         if self.game_started is True:
             self.all_sprites.append(self.player)
-
-
 
         arcade.unschedule(self.add_small_enemy)
         # Spawn new enemy every 1.5 / self.level seconds
@@ -237,16 +230,16 @@ class AirWars(arcade.Window):
                 self.paused = not self.paused
 
             if symbol == arcade.key.W or symbol == arcade.key.UP:
-                self.player.change_y = 5
+                self.player.change_y = 10
 
             if symbol == arcade.key.S or symbol == arcade.key.DOWN:
-                self.player.change_y = -5
+                self.player.change_y = -10
 
             if symbol == arcade.key.A or symbol == arcade.key.LEFT:
-                self.player.change_x = -5
+                self.player.change_x = -10
 
             if symbol == arcade.key.D or symbol == arcade.key.RIGHT:
-                self.player.change_x = 5
+                self.player.change_x = 10
 
             if symbol == arcade.key.SPACE:
                 self.shoot_bullet()
@@ -302,6 +295,12 @@ class AirWars(arcade.Window):
             self.reset()
             return
 
+        # x1 = self.player.center_x - 28
+        # x2 = self.player.center_x + 32
+        # y1 = self.player.center_y - 26
+        # y2 = self.player.center_y + 28
+        # self.player.hit_box = [(x1, y1), (x2, y1), (x1, y2), (x2, y2)]
+
         # Did you hit anything? If so, end the game
         if self.player.collides_with_list(self.small_enemies_list):
             # checks if bug spawned on top of the plane
@@ -338,12 +337,17 @@ class AirWars(arcade.Window):
         """Draw all game objects
         """
         arcade.start_render()
-        # Draw a blue circle
         if self.game_started is False:
             arcade.draw_text("Press return to start", 260, 385.0,
                 arcade.color.BLACK, 40, 80, 'left')
 
         elif self.game_over is True:
+            self.all_sprites.draw()
+            arcade.draw_rectangle_outline(self.player.center_x + 2, self.player.center_y + 1, 60, 54,
+                                          arcade.color.BLACK, 2)
+            for small_enemy in self.small_enemies_list:
+                arcade.draw_rectangle_outline(small_enemy.center_x + 1, small_enemy.center_y, 40, 50, arcade.color.RED,
+                                              2)
             arcade.draw_text("Game Over", 360, 415.0,
                              arcade.color.BLACK, 40, 80, 'left')
             arcade.draw_text("You reached level " + str(self.level), 260, 365.0,
@@ -354,6 +358,9 @@ class AirWars(arcade.Window):
         else:
             # Draw finish line
             self.all_sprites.draw()
+            arcade.draw_rectangle_outline(self.player.center_x + 2, self.player.center_y + 1, 60, 54, arcade.color.BLACK, 2)
+            for small_enemy in self.small_enemies_list:
+                arcade.draw_rectangle_outline(small_enemy.center_x+1, small_enemy.center_y, 40, 50, arcade.color.RED, 2)
             # draw checkerboard finish line
             for i in range(30):
                 if i % 2 == 1:
