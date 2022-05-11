@@ -2,6 +2,7 @@
 Air Wars Arcade Program
 
 @author: Charlie King
+inspired by Jon Fincher's "Arcade: A Primer on the Python Game Framework"
 @version: 4/21/22
 """
 
@@ -35,9 +36,9 @@ class Bug(arcade.Sprite):
         if self.right < 0:
             self.remove_from_sprite_lists()
 
-        x1 = self.center_x - 330
+        x1 = self.center_x - 310
         x2 = self.center_x - 300
-        y1 = self.center_y - 440
+        y1 = self.center_y - 470
         y2 = self.center_y - 380
         self.set_hit_box([(x1, y1), (x2, y1), (x1, y2), (x2, y2)])
 
@@ -52,6 +53,39 @@ class Bug(arcade.Sprite):
             self.velocity = (random.randint(x_change_max, x_change_min), (app.player.center_y - self.center_y) / 70)
         else:
             self.velocity = (random.randint(x_change_max, x_change_min), 0)
+
+class Deathstar(arcade.Sprite):
+    """Base class for all flying sprites
+    Flying sprites include bugs and clouds
+    """
+
+    def update(self):
+        """Update the position of the sprite
+        When it moves off screen to the left, remove it
+        """
+
+        # Move the sprite
+        super().update()
+
+class Deathray(arcade.Sprite):
+    def update(self):
+
+        """Update the position of the sprite
+        When it moves off screen to the left, remove it
+        """
+        # Move the sprite
+        super().update()
+
+        # Remove if off the screen
+        if self.right < 0:
+            self.remove_from_sprite_lists()
+
+        x1 = self.center_x - 480
+        x2 = self.center_x
+        y1 = self.center_y - 360
+        y2 = self.center_y - 350
+        self.set_hit_box([(x1, y1), (x2, y1), (x1, y2), (x2, y2)])
+
 
 class Bullet(arcade.Sprite):
     def update(self):
@@ -109,10 +143,12 @@ class AirWars(arcade.Window):
 
         # Set up the empty sprite lists
         self.small_enemies_list = None
+        self.enemies_list = None
         self.clouds_list = None
         self.all_sprites = None
         self.paused = None
         self.player = None
+        self.deathstar = None
         self.game_started = False
         self.game_over = False
         self.level = 1
@@ -121,19 +157,24 @@ class AirWars(arcade.Window):
     def reset(self):
         # Set up the empty sprite lists
         self.small_enemies_list = arcade.SpriteList()
+        self.enemies_list = arcade.SpriteList()
         self.clouds_list = arcade.SpriteList()
         self.all_sprites = arcade.SpriteList()
         self.bullet_list = arcade.SpriteList()
+        self.deathray_list = arcade.SpriteList()
         self.paused = False
         self.player = None
+        self.deathstar = None
         self.bullets_left = 50
         self.setup()
         self.on_draw()
 
     def game_over(self):
         self.small_enemies_list = None
+        self.enemies_list = None
         self.clouds_list = None
         self.bullet_list = None
+        self.deathray_list = None
         self.all_sprites = None
 
 
@@ -147,12 +188,25 @@ class AirWars(arcade.Window):
         self.player = arcade.Sprite("plane.png", SCALING)
         self.player.center_y = self.height / 2
         self.player.left = 10
+        self.deathstar = arcade.Sprite("Deathstar.png", SCALING)
+        self.deathstar.center_x = 700
+        self.deathstar.center_y = SCREEN_HEIGHT/2
+        x1 = self.deathstar.center_x - 900
+        x2 = self.deathstar.center_x - 600
+        y1 = self.deathstar.center_y - 500
+        y2 = self.deathstar.center_y - 350
+        self.deathstar.set_hit_box([(x1, y1), (x2, y1), (x1, y2), (x2, y2)])
         if self.game_started is True:
             self.all_sprites.append(self.player)
+            self.all_sprites.append(self.deathstar)
+            self.enemies_list.append(self.deathstar)
 
         arcade.unschedule(self.add_small_enemy)
         # Spawn new enemy every 1.5 / self.level seconds
         arcade.schedule(self.add_small_enemy, 1.5 / self.level)
+
+        arcade.unschedule(self.shoot_deathray)
+        arcade.schedule(self.shoot_deathray, 2)
 
         # Spawn new cloud every 3 seconds
         arcade.unschedule(self.add_cloud)
@@ -176,13 +230,28 @@ class AirWars(arcade.Window):
 
         # Add it to the enemies list
         self.small_enemies_list.append(enemy)
+        self.enemies_list.append(enemy)
         self.all_sprites.append(enemy)
+
+    def shoot_deathray(self, delta_time: float):
+        if self.game_over is False:
+            deathray = Deathray("deathray.png", 0.07)
+            deathray.center_x = self.deathstar.center_x
+            deathray.center_y = self.deathstar.center_y
+            # AI
+            x_change = int((self.player.center_x - deathray.center_x) / 50)
+            y_change = int((self.player.center_y - deathray.center_y) / 50)
+            # adjust course depending on location of player
+            deathray.velocity = (x_change, y_change)
+            self.enemies_list.append(deathray)
+            self.all_sprites.append(deathray)
+            self.deathray_list.append(deathray)
 
     def shoot_bullet(self):
         if self.bullets_left > 0:
             bullet = Bullet("Bullet.png", 0.04)
-            bullet.center_x = app.player.center_x + 30
-            bullet.center_y = app.player.center_y
+            bullet.center_x = self.player.center_x + 30
+            bullet.center_y = self.player.center_y
             self.bullets_left = self.bullets_left - 1
             self.bullet_list.append(bullet)
             self.all_sprites.append(bullet)
@@ -295,14 +364,8 @@ class AirWars(arcade.Window):
             self.reset()
             return
 
-        # x1 = self.player.center_x - 28
-        # x2 = self.player.center_x + 32
-        # y1 = self.player.center_y - 26
-        # y2 = self.player.center_y + 28
-        # self.player.hit_box = [(x1, y1), (x2, y1), (x1, y2), (x2, y2)]
-
         # Did you hit anything? If so, end the game
-        if self.player.collides_with_list(self.small_enemies_list):
+        if self.player.collides_with_list(self.enemies_list):
             # checks if bug spawned on top of the plane
             if self.player.right < SCREEN_WIDTH - 90:
                 self.game_over = True
@@ -345,6 +408,14 @@ class AirWars(arcade.Window):
             self.all_sprites.draw()
             arcade.draw_rectangle_outline(self.player.center_x + 2, self.player.center_y + 1, 60, 54,
                                           arcade.color.BLACK, 2)
+            arcade.draw_rectangle_outline(self.deathstar.center_x + 1, self.deathstar.center_y, 58, 60,
+                                          arcade.color.ASH_GREY, 2)
+            for deathray in self.deathray_list:
+                arcade.draw_rectangle_outline(deathray.center_x + 1, deathray.center_y, 75, 40,
+                                              arcade.color.LIME_GREEN, 2)
+            for bullet in self.bullet_list:
+                arcade.draw_rectangle_outline(bullet.center_x - 1, bullet.center_y, 40, 15,
+                                              arcade.color.TURQUOISE_BLUE, 2)
             for small_enemy in self.small_enemies_list:
                 arcade.draw_rectangle_outline(small_enemy.center_x + 1, small_enemy.center_y, 40, 50, arcade.color.RED,
                                               2)
@@ -359,8 +430,16 @@ class AirWars(arcade.Window):
             # Draw finish line
             self.all_sprites.draw()
             arcade.draw_rectangle_outline(self.player.center_x + 2, self.player.center_y + 1, 60, 54, arcade.color.BLACK, 2)
+            arcade.draw_rectangle_outline(self.deathstar.center_x + 1, self.deathstar.center_y, 58, 60,
+                                          arcade.color.ASH_GREY, 2)
             for small_enemy in self.small_enemies_list:
                 arcade.draw_rectangle_outline(small_enemy.center_x+1, small_enemy.center_y, 40, 50, arcade.color.RED, 2)
+            for deathray in self.deathray_list:
+                arcade.draw_rectangle_outline(deathray.center_x + 1, deathray.center_y, 75, 40,
+                                              arcade.color.LIME_GREEN, 2)
+            for bullet in self.bullet_list:
+                arcade.draw_rectangle_outline(bullet.center_x - 1, bullet.center_y, 40, 15,
+                                              arcade.color.TURQUOISE_BLUE, 2)
             # draw checkerboard finish line
             for i in range(30):
                 if i % 2 == 1:
