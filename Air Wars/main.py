@@ -38,8 +38,8 @@ class Bug(arcade.Sprite):
 
         x1 = self.center_x - 310
         x2 = self.center_x - 300
-        y1 = self.center_y - 470
-        y2 = self.center_y - 380
+        y1 = self.center_y - 380
+        y2 = self.center_y - 370
         self.set_hit_box([(x1, y1), (x2, y1), (x1, y2), (x2, y2)])
 
         self.AI()
